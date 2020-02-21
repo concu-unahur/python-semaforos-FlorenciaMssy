@@ -6,23 +6,24 @@ logging.basicConfig(format='%(asctime)s.%(msecs)03d [%(threadName)s] - %(message
 
 
 semaforoCocinero = threading.Semaphore(0)
-semaforoComensal = threading.Semaphore(3)
+semaforoComensal = threading.Semaphore(1)
 
 class Cocinero(threading.Thread):
-  def __init__(self):
+  def __init__(self, numero):
     super().__init__()
-    self.name = 'Cocinero'
+    self.name = f'Cocinero {numero}'
+
 
   def run(self):
-    semaforoCocinero.acquire
+    
     global platosDisponibles
-    try:
-      while (True):
+    while (True):
+      try:
+        semaforoCocinero.acquire() 
         logging.info('Reponiendo los platos...')
         platosDisponibles = 3
-    finally:
+      finally:
         semaforoComensal.release()
-        semaforoCocinero.release()
 
 
 class Comensal(threading.Thread):
@@ -39,16 +40,18 @@ class Comensal(threading.Thread):
             platosDisponibles -= 1
             logging.info(f'¡Qué rico! Quedan {platosDisponibles} platos')
           else:
-            semaforoComensal.acquire()
             semaforoCocinero.release()
-            
+            semaforoComensal.acquire()
+            platosDisponibles -= 1
+            logging.info(f'¡Qué rico! Quedan {platosDisponibles} platos')
       finally:
           semaforoComensal.release()
       
 
 platosDisponibles = 3
 
-Cocinero().start()
+Cocinero(1).start()
+Cocinero(2).start()
 
 for i in range(5):
   Comensal(i).start()
